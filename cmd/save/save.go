@@ -4,18 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
+	"kody/lib/cmder"
+	"kody/lib/directory"
 	"kody/lib/workshop"
+	"os"
 	"path/filepath"
 )
 
 var (
 	workshopPath string
 	outputDir    string
+	shouldCommit bool
 )
 
 func init() {
 	saveCmd.PersistentFlags().StringVarP(&workshopPath, "workshop", "w", ".", "Path to the current workshop")
 	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", ".", "Path to the output directory")
+	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
 }
 
 func checkSaveFlags() error {
@@ -74,6 +79,42 @@ var saveCmd = &cobra.Command{
 		err = workshop.CopyExercise(playgroundPath, exerciseDir)
 		if err != nil {
 			return fmt.Errorf("error copying exercise %s > %s: %w", playgroundPath, outputDir, err)
+		}
+
+		if shouldCommit {
+			if !directory.IsGitRepo(outputDir) {
+				return fmt.Errorf("output directory '%s' is not a git repository", outputDir)
+			}
+
+			dir, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("getting current working directory: %w", err)
+			}
+
+			err = os.Chdir(outputDir)
+			if err != nil {
+				return fmt.Errorf("changing directory to '%s': %w", outputDir, err)
+			}
+
+			output, err := cmder.ExecuteCommand("git", "add", "-A", exerciseDir)
+			if err != nil {
+				fmt.Print(output)
+				return fmt.Errorf("adding exercise to git repository: %w", err)
+			}
+
+			fmt.Println(output)
+
+			output, err = cmder.ExecuteCommand("git", "commit", "-m", fmt.Sprintf("Add exercise %s", exercise.Descriptor()))
+			if err != nil {
+				return fmt.Errorf("committing exercise to git repository: %w", err)
+			}
+
+			fmt.Println(output)
+
+			err = os.Chdir(dir)
+			if err != nil {
+				return fmt.Errorf("changing directory back to '%s': %w", dir, err)
+			}
 		}
 
 		fmt.Printf("Copied exercise from playground '%s' > '%s'\n", playgroundPath, exerciseDir)
