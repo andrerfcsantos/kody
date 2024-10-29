@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"kody/cmd/save"
+	"kody/cmd/status"
 	"os"
 )
 
 func init() {
 	rootCmd.AddCommand(save.GetCmd())
+	rootCmd.AddCommand(status.GetCmd())
 }
 
 var rootCmd = &cobra.Command{
