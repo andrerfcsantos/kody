@@ -14,6 +14,7 @@ type Exercise struct {
 	Number  int
 	Slug    string
 	Section Section
+	path    string
 }
 
 func (e *Exercise) BreadCrumbs() string {
@@ -34,6 +35,14 @@ func (e *Exercise) FolderName() string {
 
 func (e *Exercise) SectionFolderName() string {
 	return fmt.Sprintf("%0.2d.%s", e.Section.Number, e.Section.Slug)
+}
+
+func (e *Exercise) Hash() (string, error) {
+	return HashFromPath(e.path)
+}
+
+func (e *Exercise) Path() string {
+	return e.path
 }
 
 func HashFromPath(exerciseDir string) (s string, err error) {
@@ -91,6 +100,7 @@ func ExerciseFromPath(exercisePath string) (*Exercise, error) {
 		Number:  exerciseNumber,
 		Slug:    exerciseParts[2],
 		Section: section,
+		path:    exercisePath,
 	}
 
 	return &exercise, nil

@@ -47,79 +47,73 @@ var saveCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		isWorkshop := workshop.IsWorkshopFolder(workshopPath)
-		if !isWorkshop {
-			return fmt.Errorf("'%s' does not look like an Epic React Dev workshop folder", workshopPath)
-		}
-
-		hasPlayground := workshop.HasPlayground(workshopPath)
-		if !hasPlayground {
-			return fmt.Errorf("'%s' does not have a playground folder", workshopPath)
-		}
-
-		playgroundPath := filepath.Join(workshopPath, "playground")
-		playgroundHash, err := workshop.HashFromPath(playgroundPath)
+		w, err := workshop.WorkshopFromPath(workshopPath)
 		if err != nil {
-			return fmt.Errorf("error getting hash for '%s': %w", playgroundPath, err)
+			return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
 		}
 
-		exercise, err := workshop.LookupExerciseFromHash(workshopPath, playgroundHash)
+		exercise, err := w.PlaygroundExercise()
 		if err != nil {
-			return fmt.Errorf("error looking up exercise from playground hash %s: %w", playgroundHash, err)
+			return fmt.Errorf("getting playground exercise: %w", err)
 		}
 
-		if exercise == nil {
-			return fmt.Errorf("no exercise found for playground hash %s", playgroundHash)
-		}
-		workshopSlug := filepath.Base(workshopPath)
+		fmt.Printf("Looks like you are doing exercise %s\n", exercise.BreadCrumbsWithWorkshop(w.Slug()))
 
-		fmt.Printf("Looks like you are doing exercise %s\n", exercise.BreadCrumbsWithWorkshop(workshopSlug))
-
-		exerciseDir := filepath.Join(outputDir, workshopSlug, exercise.SectionFolderName(), exercise.FolderName())
-		err = workshop.CopyExercise(playgroundPath, exerciseDir)
+		exerciseDir := filepath.Join(outputDir, w.Slug(), exercise.SectionFolderName(), exercise.FolderName())
+		err = workshop.CopyExercise(w.PlaygroundPath(), exerciseDir)
 		if err != nil {
-			return fmt.Errorf("error copying exercise %s > %s: %w", playgroundPath, outputDir, err)
+			return fmt.Errorf("error copying exercise %s > %s: %w", w.PlaygroundPath(), outputDir, err)
 		}
 
 		if shouldCommit {
-			if !directory.IsGitRepo(outputDir) {
-				return fmt.Errorf("output directory '%s' is not a git repository", outputDir)
-			}
-
-			dir, err := os.Getwd()
+			err = HandleCommit(outputDir, exerciseDir, fmt.Sprintf("Add exercise %s", exercise.Descriptor()))
 			if err != nil {
-				return fmt.Errorf("getting current working directory: %w", err)
+				return fmt.Errorf("committing exercise '%s': %w", exerciseDir, err)
 			}
 
-			err = os.Chdir(outputDir)
-			if err != nil {
-				return fmt.Errorf("changing directory to '%s': %w", outputDir, err)
-			}
-
-			output, err := cmder.ExecuteCommand("git", "add", "-A", exerciseDir)
-			if err != nil {
-				fmt.Print(output)
-				return fmt.Errorf("adding exercise to git repository: %w", err)
-			}
-
-			fmt.Println(output)
-
-			output, err = cmder.ExecuteCommand("git", "commit", "-m", fmt.Sprintf("Add exercise %s", exercise.Descriptor()))
-			if err != nil {
-				return fmt.Errorf("committing exercise to git repository: %w", err)
-			}
-
-			fmt.Println(output)
-
-			err = os.Chdir(dir)
-			if err != nil {
-				return fmt.Errorf("changing directory back to '%s': %w", dir, err)
-			}
 		}
 
-		fmt.Printf("Copied exercise from playground '%s' > '%s'\n", playgroundPath, exerciseDir)
+		fmt.Printf("Copied exercise from playground '%s' > '%s'\n", w.PlaygroundPath(), exerciseDir)
 		return nil
 	},
+}
+
+func HandleCommit(repoPath string, exercisePath string, message string) error {
+	if !directory.IsGitRepo(repoPath) {
+		return fmt.Errorf("output directory '%s' is not a git repository", repoPath)
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current working directory: %w", err)
+	}
+
+	err = os.Chdir(repoPath)
+	if err != nil {
+		return fmt.Errorf("changing directory to '%s': %w", repoPath, err)
+	}
+
+	output, err := cmder.ExecuteCommand("git", "add", "-A", exercisePath)
+	if err != nil {
+		fmt.Print(output)
+		return fmt.Errorf("adding exercise to git repository: %w", err)
+	}
+
+	fmt.Println(output)
+
+	output, err = cmder.ExecuteCommand("git", "commit", "-m", message)
+	if err != nil {
+		return fmt.Errorf("committing exercise to git repository: %w", err)
+	}
+
+	fmt.Println(output)
+
+	err = os.Chdir(dir)
+	if err != nil {
+		return fmt.Errorf("changing directory back to '%s': %w", dir, err)
+	}
+
+	return nil
 }
 
 func GetCmd() *cobra.Command {
