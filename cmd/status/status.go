@@ -3,6 +3,7 @@ package status
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"kody/lib/config"
 	"kody/lib/workshop"
 )
 
@@ -36,6 +37,6 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-func GetCmd() *cobra.Command {
+func GetCmd(config *config.Config) *cobra.Command {
 	return statusCmd
 }

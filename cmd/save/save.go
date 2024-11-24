@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"kody/lib/cmder"
+	"kody/lib/config"
 	"kody/lib/directory"
 	"kody/lib/workshop"
 	"os"
 	"path/filepath"
+)
+
+var (
+	cfg *config.Config
 )
 
 var (
@@ -18,7 +23,8 @@ var (
 )
 
 func init() {
-	saveCmd.PersistentFlags().StringVarP(&workshopPath, "workshop", "w", ".", "Path to the current workshop")
+	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
 	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", ".", "Path to the output directory")
 	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
 }
@@ -116,6 +122,7 @@ func HandleCommit(repoPath string, exercisePath string, message string) error {
 	return nil
 }
 
-func GetCmd() *cobra.Command {
+func GetCmd(config *config.Config) *cobra.Command {
+	cfg = config
 	return saveCmd
 }
