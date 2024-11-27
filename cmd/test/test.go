@@ -10,11 +10,6 @@ var (
 	cfg *config.Config
 )
 
-func init() {
-	testCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
-}
-
 var testCmd = &cobra.Command{
 	Use:    "test",
 	Hidden: true,
@@ -27,5 +22,9 @@ var testCmd = &cobra.Command{
 
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
+
+	testCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
+
 	return testCmd
 }

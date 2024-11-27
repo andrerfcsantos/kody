@@ -22,13 +22,6 @@ var (
 	shouldCommit bool
 )
 
-func init() {
-	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
-	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", ".", "Path to the output directory")
-	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
-}
-
 func checkSaveFlags() error {
 	if workshopPath == "" {
 		return errors.New("please provide a path to the workshop folder using the --workshop flag")
@@ -124,5 +117,11 @@ func HandleCommit(repoPath string, exercisePath string, message string) error {
 
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
+
+	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
+	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", ".", "Path to the output directory")
+	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
+
 	return saveCmd
 }

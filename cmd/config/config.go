@@ -10,11 +10,6 @@ var (
 	cfg *config.Config
 )
 
-func init() {
-	configCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", configCmd.PersistentFlags().Lookup("workshop"))
-}
-
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage kody configuration",
@@ -62,5 +57,9 @@ func getAllConfig() {
 
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
+
+	configCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	cfg.BindPFlag("workshop.path", configCmd.PersistentFlags().Lookup("workshop"))
+
 	return configCmd
 }
