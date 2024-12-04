@@ -9,7 +9,6 @@ import (
 	"kody/lib/directory"
 	"kody/lib/workshop"
 	"os"
-	"path/filepath"
 )
 
 var (
@@ -22,13 +21,17 @@ var (
 	shouldCommit bool
 )
 
-func checkSaveFlags() error {
+func checkAndSetupConfigs() error {
+	workshopPath = cfg.GetString("workshop.path")
+	outputDir = cfg.GetString("save.output.directory")
+	shouldCommit = cfg.GetBool("save.shouldCommit")
+
 	if workshopPath == "" {
-		return errors.New("please provide a path to the workshop folder using the --workshop flag")
+		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration")
 	}
 
 	if outputDir == "" {
-		return errors.New("please provide a path to the output directory using the --output flag")
+		return errors.New("please provide a path to the output directory using the --output flag or the save.output.directory configuration")
 	}
 
 	return nil
@@ -39,7 +42,7 @@ var saveCmd = &cobra.Command{
 	Short: "Save current playground to a more permanent location",
 	Long:  `This command allows to save the current contents of a playground to a more permanent location.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := checkSaveFlags(); err != nil {
+		if err := checkAndSetupConfigs(); err != nil {
 			return fmt.Errorf("flag error: %w", err)
 		}
 		return nil
@@ -58,14 +61,15 @@ var saveCmd = &cobra.Command{
 
 		fmt.Printf("Looks like you are doing exercise %s\n", exercise.BreadCrumbsWithWorkshop(w.Slug()))
 
-		exerciseDir := filepath.Join(outputDir, w.Slug(), exercise.SectionFolderName(), exercise.FolderName())
+		exerciseDir := workshop.DefaultExerciseDir(outputDir, w, exercise)
 		err = workshop.CopyExercise(w.PlaygroundPath(), exerciseDir)
 		if err != nil {
 			return fmt.Errorf("error copying exercise %s > %s: %w", w.PlaygroundPath(), outputDir, err)
 		}
 
 		if shouldCommit {
-			err = HandleCommit(outputDir, exerciseDir, fmt.Sprintf("Add exercise %s", exercise.Descriptor()))
+			commitMessage := fmt.Sprintf("[%s] Add exercise %s", w.Slug(), exercise.Descriptor())
+			err = HandleCommit(outputDir, exerciseDir, commitMessage)
 			if err != nil {
 				return fmt.Errorf("committing exercise '%s': %w", exerciseDir, err)
 			}
@@ -115,13 +119,17 @@ func HandleCommit(repoPath string, exercisePath string, message string) error {
 	return nil
 }
 
-func GetCmd(config *config.Config) *cobra.Command {
-	cfg = config
+func GetCmd(configuration *config.Config) *cobra.Command {
+	cfg = configuration
 
 	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
-	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", ".", "Path to the output directory")
+
+	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", config.DefaultSaveDir(cfg), "Path to the output directory")
+	cfg.BindPFlag("save.output.directory", saveCmd.PersistentFlags().Lookup("output"))
+
 	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
+	cfg.BindPFlag("save.shouldCommit", saveCmd.PersistentFlags().Lookup("commit"))
 
 	return saveCmd
 }

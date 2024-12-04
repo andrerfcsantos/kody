@@ -24,7 +24,10 @@ func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 
 	testCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
+	err := cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
+	if err != nil {
+		fmt.Printf("[testCmd] error binding flag: %v\n", err)
+	}
 
 	return testCmd
 }

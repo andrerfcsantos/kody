@@ -16,7 +16,7 @@ var statusCmd = &cobra.Command{
 	Short: "Information about the current exercise",
 	Long:  `This command gives information about the current exercise based on the current playground.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workshopPath, err := cmd.Flags().GetString("workshop.path")
+		workshopPath := cfg.GetString("workshop.path")
 		w, err := workshop.WorkshopFromPath(workshopPath)
 		if err != nil {
 			return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
@@ -36,6 +36,10 @@ var statusCmd = &cobra.Command{
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 	statusCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", statusCmd.PersistentFlags().Lookup("workshop"))
+	err := cfg.BindPFlag("workshop.path", statusCmd.PersistentFlags().Lookup("workshop"))
+
+	if err != nil {
+		fmt.Printf("Error setting up the workshop flag: %s\n", err)
+	}
 	return statusCmd
 }

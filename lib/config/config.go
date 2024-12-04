@@ -86,3 +86,16 @@ func (c *Config) Write() error {
 	}
 	return nil
 }
+
+func (c *Config) DataDir() (string, error) {
+	dataPaths, err := c.gapScope.DataDirs()
+	if err != nil {
+		return "", fmt.Errorf("getting data dirs: %w", err)
+	}
+	
+	if len(dataPaths) == 0 {
+		return "", fmt.Errorf("no suitable data dirs found")
+	}
+
+	return dataPaths[0], nil
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	configCmd "kody/cmd/config"
+	"kody/cmd/restore"
 	"kody/cmd/save"
 	"kody/cmd/status"
 	"kody/cmd/test"
@@ -17,6 +18,7 @@ func init() {
 	cfg = config.NewConfig("kody")
 
 	rootCmd.AddCommand(save.GetCmd(cfg))
+	rootCmd.AddCommand(restore.GetCmd(cfg))
 	rootCmd.AddCommand(status.GetCmd(cfg))
 	rootCmd.AddCommand(configCmd.GetCmd(cfg))
 	rootCmd.AddCommand(test.GetCmd(cfg))
