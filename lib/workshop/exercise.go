@@ -105,3 +105,7 @@ func ExerciseFromPath(exercisePath string) (*Exercise, error) {
 
 	return &exercise, nil
 }
+
+func DefaultExerciseDir(outputDir string, w *Workshop, exercise *Exercise) string {
+	return filepath.Join(outputDir, w.Slug(), exercise.SectionFolderName(), exercise.FolderName())
+}
