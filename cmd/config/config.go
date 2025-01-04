@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"kody/lib/config"
+	"sort"
 )
 
 var (
@@ -41,6 +42,7 @@ var configCmd = &cobra.Command{
 
 func getAllConfig() {
 	keys := cfg.AllKeys()
+	sort.Strings(keys)
 
 	if len(keys) == 0 {
 		fmt.Println("No configurations defined yet.")
