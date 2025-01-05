@@ -26,7 +26,7 @@ func (e *Exercise) BreadCrumbsWithWorkshop(workshop string) string {
 }
 
 func (e *Exercise) Descriptor() string {
-	return fmt.Sprintf("%0.2d.%0.2d-%s", e.Section.Number, e.Number, e.Slug)
+	return fmt.Sprintf("%0.2d-%s", e.Number, e.Slug)
 }
 
 func (e *Exercise) FolderName() string {

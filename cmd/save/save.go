@@ -9,6 +9,8 @@ import (
 	"kody/lib/directory"
 	"kody/lib/workshop"
 	"os"
+	"strings"
+	"text/template"
 )
 
 var (
@@ -16,15 +18,17 @@ var (
 )
 
 var (
-	workshopPath string
-	outputDir    string
-	shouldCommit bool
+	workshopPath          string
+	outputDir             string
+	shouldCommit          bool
+	commitMessageTemplate *template.Template
 )
 
 func checkAndSetupConfigs() error {
 	workshopPath = cfg.GetString("workshop.path")
 	outputDir = cfg.GetString("save.output.directory")
 	shouldCommit = cfg.GetBool("save.shouldCommit")
+	commitMessageTemplateString := cfg.GetString("save.commit.message")
 
 	if workshopPath == "" {
 		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration")
@@ -32,6 +36,12 @@ func checkAndSetupConfigs() error {
 
 	if outputDir == "" {
 		return errors.New("please provide a path to the output directory using the --output flag or the save.output.directory configuration")
+	}
+
+	var err error
+	commitMessageTemplate, err = template.New("commitMessage").Parse(commitMessageTemplateString)
+	if err != nil {
+		return fmt.Errorf("parsing commit message template: %w", err)
 	}
 
 	return nil
@@ -68,8 +78,14 @@ var saveCmd = &cobra.Command{
 		}
 
 		if shouldCommit {
-			commitMessage := fmt.Sprintf("[%s] Add exercise %s", w.Slug(), exercise.Descriptor())
-			err = HandleCommit(outputDir, exerciseDir, commitMessage)
+			// commitMessage := fmt.Sprintf("[%s] Add exercise %s", w.Slug(), exercise.Descriptor())
+			commitMessageWriter := &strings.Builder{}
+			err = commitMessageTemplate.Execute(commitMessageWriter, TemplateData{Workshop: w, Exercise: exercise})
+			if err != nil {
+				return fmt.Errorf("rendering commit message template: %w", err)
+			}
+
+			err = HandleCommit(outputDir, exerciseDir, commitMessageWriter.String())
 			if err != nil {
 				return fmt.Errorf("committing exercise '%s': %w", exerciseDir, err)
 			}
@@ -119,17 +135,26 @@ func HandleCommit(repoPath string, exercisePath string, message string) error {
 	return nil
 }
 
+type TemplateData struct {
+	Workshop *workshop.Workshop
+	Exercise *workshop.Exercise
+}
+
 func GetCmd(configuration *config.Config) *cobra.Command {
 	cfg = configuration
 
 	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
 
-	saveCmd.PersistentFlags().StringVarP(&outputDir, "output", "o", config.DefaultSaveDir(cfg), "Path to the output directory")
+	saveCmd.PersistentFlags().StringP("output", "o", config.DefaultSaveDir(cfg), "Path to the output directory")
 	cfg.BindPFlag("save.output.directory", saveCmd.PersistentFlags().Lookup("output"))
 
-	saveCmd.PersistentFlags().BoolVarP(&shouldCommit, "commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
+	saveCmd.PersistentFlags().BoolP("commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
 	cfg.BindPFlag("save.shouldCommit", saveCmd.PersistentFlags().Lookup("commit"))
 
+	saveCmd.PersistentFlags().StringP("commitMessage", "m", "[{{ .Workshop.Slug }}] Add exercise {{ .Exercise.BreadCrumbs }}",
+		"Commit message to use, in case the --commit flag is set or the save.shouldCommit configuration is set to true. "+
+			"The template is rendered using Go's text/template package.")
+	cfg.BindPFlag("save.commit.message", saveCmd.PersistentFlags().Lookup("commitMessage"))
 	return saveCmd
 }
