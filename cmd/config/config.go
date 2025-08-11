@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"kody/lib/config"
 	"sort"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -62,6 +63,9 @@ func GetCmd(config *config.Config) *cobra.Command {
 
 	configCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", configCmd.PersistentFlags().Lookup("workshop"))
+
+	configCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
+	cfg.BindPFlag("workshops.dir", configCmd.PersistentFlags().Lookup("workshops-dir"))
 
 	return configCmd
 }

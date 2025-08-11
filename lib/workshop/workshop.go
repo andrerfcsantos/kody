@@ -2,9 +2,12 @@ package workshop
 
 import (
 	"fmt"
+	"io/fs"
 	"kody/lib/directory"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -38,6 +41,38 @@ func (w *Workshop) PlaygroundPath() string {
 
 func (w *Workshop) HasPlayground() bool {
 	return directory.Exists(w.PlaygroundPath())
+}
+
+func (w *Workshop) PlaygroundModTime() (*time.Time, error) {
+	playgroundPath := w.PlaygroundPath()
+	if !directory.Exists(playgroundPath) {
+		return nil, fmt.Errorf("playground directory '%s' does not exist", playgroundPath)
+	}
+
+	var latestModTime time.Time
+
+	err := filepath.Walk(playgroundPath, func(path string, fileInfo fs.FileInfo, err error) error {
+		if err != nil || fileInfo == nil {
+			return nil
+		}
+
+		if fileInfo.IsDir() {
+			return nil
+		}
+
+		modTime := fileInfo.ModTime()
+		if modTime.After(latestModTime) {
+			latestModTime = modTime
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("walking playground directory: %w", err)
+	}
+
+	return &latestModTime, nil
 }
 
 func (w *Workshop) PlaygroundHash() (string, error) {
@@ -103,6 +138,56 @@ func WorkshopFromPath(workshopPath string) (*Workshop, error) {
 		Path:   workshopPath,
 		config: config,
 	}, nil
+}
+
+// DetectCurrentWorkshop automatically detects the current workshop from a directory
+// containing workshop sub-directories by finding the one with the most recent playground mod time
+func DetectCurrentWorkshop(workshopsDir string) (*Workshop, error) {
+	if !directory.Exists(workshopsDir) {
+		return nil, fmt.Errorf("workshops directory '%s' does not exist", workshopsDir)
+	}
+
+	entries, err := os.ReadDir(workshopsDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading workshops directory '%s': %w", workshopsDir, err)
+	}
+
+	var latestWorkshop *Workshop
+	var latestModTime time.Time
+	var foundWorkshop bool
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		workshopPath := filepath.Join(workshopsDir, entry.Name())
+		if !isWorkshopFolder(workshopPath) {
+			continue
+		}
+
+		workshop, err := WorkshopFromPath(workshopPath)
+		if err != nil {
+			continue // Skip workshops that can't be loaded
+		}
+
+		modTime, err := workshop.PlaygroundModTime()
+		if err != nil {
+			continue // Skip workshops without playground or with errors
+		}
+
+		if modTime.After(latestModTime) {
+			latestModTime = *modTime
+			latestWorkshop = workshop
+			foundWorkshop = true
+		}
+	}
+
+	if !foundWorkshop {
+		return nil, fmt.Errorf("no valid workshops found in directory '%s'", workshopsDir)
+	}
+
+	return latestWorkshop, nil
 }
 
 func isWorkshopFolder(workshopPath string) bool {

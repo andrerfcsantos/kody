@@ -3,7 +3,6 @@ package restore
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"kody/lib/config"
 	"kody/lib/directory"
 	"kody/lib/workshop"
@@ -11,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -18,18 +19,39 @@ var (
 )
 
 var (
-	workshopPath string
-	outputDir    string
-	sectionNo    int
-	exerciseNo   int
+	workshopPath    string
+	workshopsDir    string
+	currentWorkshop *workshop.Workshop
+	outputDir       string
+	sectionNo       int
+	exerciseNo      int
 )
 
-func checkAndSetupConfigs() error {
+func checkAndSetupConfigs(cmd *cobra.Command) error {
 	workshopPath = cfg.GetString("workshop.path")
+	workshopsDir = cfg.GetString("workshops.dir")
 	outputDir = cfg.GetString("save.output.directory")
 
+	// Check if flags were passed directly
+	if workshopPathFlag := cmd.Flags().Lookup("workshop"); workshopPathFlag != nil && workshopPathFlag.Changed {
+		workshopPath = workshopPathFlag.Value.String()
+	}
+	if workshopsDirFlag := cmd.Flags().Lookup("workshops-dir"); workshopsDirFlag != nil && workshopsDirFlag.Changed {
+		workshopsDir = workshopsDirFlag.Value.String()
+	}
+
+	// If workshopPath is not provided but workshopsDir is, auto-detect the current workshop
+	if workshopPath == "" && workshopsDir != "" {
+		var err error
+		currentWorkshop, err = workshop.DetectCurrentWorkshop(workshopsDir)
+		if err != nil {
+			return fmt.Errorf("auto-detecting workshop from workshopsDir '%s': %w", workshopsDir, err)
+		}
+		workshopPath = currentWorkshop.Path
+	}
+
 	if workshopPath == "" {
-		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration")
+		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration, or use --workshops-dir to auto-detect")
 	}
 
 	if outputDir == "" {
@@ -40,24 +62,31 @@ func checkAndSetupConfigs() error {
 }
 
 var restoreCmd = &cobra.Command{
-	Use:    "restore",
+	Use:    "restore [exercise]",
 	Hidden: true,
-	Short:  "Testing command",
+	Short:  "Restore an exercise to the playground",
+	Long:   `Restore an exercise to the playground. If no exercise is specified, automatically detects the current exercise from the playground.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := checkAndSetupConfigs(); err != nil {
+		if err := checkAndSetupConfigs(cmd); err != nil {
 			return fmt.Errorf("flag error: %w", err)
 		}
 		return nil
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
+		// If no exercise is provided, we'll auto-detect from the playground
+		if len(args) == 0 {
+			return nil
+		}
+
+		// If an exercise is provided, parse it
 		if len(args) != 1 {
-			return errors.New("restore requires an argument with the exercise to restore, in the format <section_number>.<exercise_number>, e.g. \"01.02\"")
+			return errors.New("restore accepts at most one argument with the exercise to restore, in the format <section_number>.<exercise_number>, e.g. \"01.02\"")
 		}
 
 		exerciseStr := args[0]
 		exerciseSplit := strings.Split(exerciseStr, ".")
 		if len(exerciseSplit) != 2 {
-			return errors.New("restore requires an argument with the exercise to restore, in the format <section_number>.<exercise_number>, e.g. \"01.02\"")
+			return errors.New("exercise argument must be in the format <section_number>.<exercise_number>, e.g. \"01.02\"")
 		}
 		var err error
 		sectionNo, err = strconv.Atoi(exerciseSplit[0])
@@ -73,9 +102,31 @@ var restoreCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		w, err := workshop.WorkshopFromPath(workshopPath)
-		if err != nil {
-			return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
+		var w *workshop.Workshop
+		var err error
+
+		// Use the already loaded workshop if available, otherwise load it from path
+		if currentWorkshop != nil {
+			w = currentWorkshop
+		} else {
+			w, err = workshop.WorkshopFromPath(workshopPath)
+			if err != nil {
+				return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
+			}
+		}
+
+		// If no exercise was specified, auto-detect from the playground
+		if len(args) == 0 {
+			playgroundExercise, err := w.PlaygroundExercise()
+			if err != nil {
+				return fmt.Errorf("auto-detecting exercise from playground: %w", err)
+			}
+
+			// Use the section and exercise numbers from the detected exercise
+			sectionNo = playgroundExercise.Section.Number
+			exerciseNo = playgroundExercise.Number
+
+			fmt.Printf("Auto-detected exercise: %s > %s\n", playgroundExercise.BreadCrumbsWithWorkshop(w.Slug()), playgroundExercise.Descriptor())
 		}
 
 		sectionGlob := fmt.Sprintf("%02d.*", sectionNo)
@@ -109,6 +160,9 @@ func GetCmd(configuration *config.Config) *cobra.Command {
 
 	restoreCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", restoreCmd.PersistentFlags().Lookup("workshop"))
+
+	restoreCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
+	cfg.BindPFlag("workshops.dir", restoreCmd.PersistentFlags().Lookup("workshops-dir"))
 
 	restoreCmd.PersistentFlags().StringP("source", "s", config.DefaultSaveDir(cfg), "Source directory from where to get the exercises. This is usually the same directory the save command uses to save the exercises.")
 	cfg.BindPFlag("save.output.directory", restoreCmd.PersistentFlags().Lookup("source"))

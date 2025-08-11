@@ -3,7 +3,6 @@ package save
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"kody/lib/cmder"
 	"kody/lib/config"
 	"kody/lib/directory"
@@ -11,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -19,19 +20,40 @@ var (
 
 var (
 	workshopPath          string
+	workshopsDir          string
+	currentWorkshop       *workshop.Workshop
 	outputDir             string
 	shouldCommit          bool
 	commitMessageTemplate *template.Template
 )
 
-func checkAndSetupConfigs() error {
+func checkAndSetupConfigs(cmd *cobra.Command) error {
 	workshopPath = cfg.GetString("workshop.path")
+	workshopsDir = cfg.GetString("workshops.dir")
 	outputDir = cfg.GetString("save.output.directory")
 	shouldCommit = cfg.GetBool("save.shouldCommit")
 	commitMessageTemplateString := cfg.GetString("save.commit.message")
 
+	// Check if flags were passed directly
+	if workshopPathFlag := cmd.Flags().Lookup("workshop"); workshopPathFlag != nil && workshopPathFlag.Changed {
+		workshopPath = workshopPathFlag.Value.String()
+	}
+	if workshopsDirFlag := cmd.Flags().Lookup("workshops-dir"); workshopsDirFlag != nil && workshopsDirFlag.Changed {
+		workshopsDir = workshopsDirFlag.Value.String()
+	}
+
+	// If workshopPath is not provided but workshopsDir is, auto-detect the current workshop
+	if workshopPath == "" && workshopsDir != "" {
+		var err error
+		currentWorkshop, err = workshop.DetectCurrentWorkshop(workshopsDir)
+		if err != nil {
+			return fmt.Errorf("auto-detecting workshop from workshopsDir '%s': %w", workshopsDir, err)
+		}
+		workshopPath = currentWorkshop.Path
+	}
+
 	if workshopPath == "" {
-		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration")
+		return errors.New("please provide a path to the workshop folder using the --workshop flag or the workshop.path configuration, or use --workshops-dir to auto-detect")
 	}
 
 	if outputDir == "" {
@@ -52,16 +74,23 @@ var saveCmd = &cobra.Command{
 	Short: "Save current playground to a more permanent location",
 	Long:  `This command allows to save the current contents of a playground to a more permanent location.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := checkAndSetupConfigs(); err != nil {
+		if err := checkAndSetupConfigs(cmd); err != nil {
 			return fmt.Errorf("flag error: %w", err)
 		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var w *workshop.Workshop
+		var err error
 
-		w, err := workshop.WorkshopFromPath(workshopPath)
-		if err != nil {
-			return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
+		// Use the already loaded workshop if available, otherwise load it from path
+		if currentWorkshop != nil {
+			w = currentWorkshop
+		} else {
+			w, err = workshop.WorkshopFromPath(workshopPath)
+			if err != nil {
+				return fmt.Errorf("getting workshop from path '%s': %w", workshopPath, err)
+			}
 		}
 
 		exercise, err := w.PlaygroundExercise()
@@ -145,6 +174,9 @@ func GetCmd(configuration *config.Config) *cobra.Command {
 
 	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
+
+	saveCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
+	cfg.BindPFlag("workshops.dir", saveCmd.PersistentFlags().Lookup("workshops-dir"))
 
 	saveCmd.PersistentFlags().StringP("output", "o", config.DefaultSaveDir(cfg), "Path to the output directory")
 	cfg.BindPFlag("save.output.directory", saveCmd.PersistentFlags().Lookup("output"))
