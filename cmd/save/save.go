@@ -172,7 +172,7 @@ type TemplateData struct {
 func GetCmd(configuration *config.Config) *cobra.Command {
 	cfg = configuration
 
-	saveCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	saveCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
 
 	saveCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")

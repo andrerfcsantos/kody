@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	gap "github.com/muesli/go-app-paths"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	gap "github.com/muesli/go-app-paths"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -58,9 +59,9 @@ func (c *Config) Read() error {
 }
 
 func (c *Config) Write() error {
-	paths, err := c.gapScope.LookupConfig(configName + "." + configType)
+	paths, err := c.ConfigPaths()
 	if err != nil {
-		return fmt.Errorf("getting config path: %w", err)
+		return err
 	}
 
 	if len(paths) == 0 {
@@ -87,12 +88,20 @@ func (c *Config) Write() error {
 	return nil
 }
 
+func (c *Config) ConfigPaths() ([]string, error) {
+	paths, err := c.gapScope.LookupConfig(configName + "." + configType)
+	if err != nil {
+		return nil, fmt.Errorf("getting config path: %w", err)
+	}
+	return paths, nil
+}
+
 func (c *Config) DataDir() (string, error) {
 	dataPaths, err := c.gapScope.DataDirs()
 	if err != nil {
 		return "", fmt.Errorf("getting data dirs: %w", err)
 	}
-	
+
 	if len(dataPaths) == 0 {
 		return "", fmt.Errorf("no suitable data dirs found")
 	}

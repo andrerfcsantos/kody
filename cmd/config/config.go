@@ -56,12 +56,18 @@ func getAllConfig() {
 			fmt.Printf("%s: %v\n", key, value)
 		}
 	}
+
+	paths, err := cfg.ConfigPaths()
+	if err != nil {
+		fmt.Printf("\n(Error getting config paths: %v)\n", err)
+	}
+	fmt.Printf("\n(config paths: %v)\n", paths)
 }
 
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 
-	configCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	configCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", configCmd.PersistentFlags().Lookup("workshop"))
 
 	configCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")

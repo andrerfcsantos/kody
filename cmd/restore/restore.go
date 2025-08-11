@@ -158,7 +158,7 @@ var restoreCmd = &cobra.Command{
 func GetCmd(configuration *config.Config) *cobra.Command {
 	cfg = configuration
 
-	restoreCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	restoreCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
 	cfg.BindPFlag("workshop.path", restoreCmd.PersistentFlags().Lookup("workshop"))
 
 	restoreCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")

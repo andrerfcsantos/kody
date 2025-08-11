@@ -59,7 +59,7 @@ func checkAndSetupConfigs(cmd *cobra.Command) error {
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 
-	testCmd.PersistentFlags().StringP("workshop", "w", ".", "Path to the current workshop")
+	testCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
 	err := cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
 
 	if err != nil {
