@@ -1,7 +1,20 @@
 package main
 
-import "kody/cmd"
+import (
+	"kody/cmd"
+	"kody/lib/config"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 func main() {
-	cmd.Execute()
+	cmd.Execute(config.BuildInfo{
+		Version: version,
+		Commit:  commit,
+		Date:    date,
+	})
 }

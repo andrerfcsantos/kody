@@ -7,6 +7,7 @@ import (
 	"kody/cmd/save"
 	"kody/cmd/status"
 	"kody/cmd/test"
+	"kody/cmd/version"
 	"kody/lib/config"
 	"os"
 
@@ -63,6 +64,7 @@ func init() {
 	rootCmd.AddCommand(status.GetCmd(cfg))
 	rootCmd.AddCommand(configCmd.GetCmd(cfg))
 	rootCmd.AddCommand(test.GetCmd(cfg))
+	rootCmd.AddCommand(version.GetCmd(cfg))
 }
 
 var rootCmd = &cobra.Command{
@@ -74,7 +76,8 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute() {
+func Execute(buildInfo config.BuildInfo) {
+	cfg.SetBuildInfo(buildInfo)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

@@ -23,6 +23,7 @@ type Config struct {
 	gapScope      *gap.Scope
 	viper         *viper.Viper
 	configFlagMap map[string]interface{}
+	buildInfo     BuildInfo
 }
 
 func NewConfig(appName string) *Config {
@@ -132,6 +133,14 @@ func (c *Config) DataDir() (string, error) {
 	}
 
 	return dataPaths[0], nil
+}
+
+func (c *Config) SetBuildInfo(buildInfo BuildInfo) {
+	c.buildInfo = buildInfo
+}
+
+func (c *Config) GetBuildInfo() BuildInfo {
+	return c.buildInfo
 }
 
 func (c *Config) Get(key string) any {
