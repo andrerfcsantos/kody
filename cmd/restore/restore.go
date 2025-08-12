@@ -158,14 +158,9 @@ var restoreCmd = &cobra.Command{
 func GetCmd(configuration *config.Config) *cobra.Command {
 	cfg = configuration
 
-	restoreCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", restoreCmd.PersistentFlags().Lookup("workshop"))
-
-	restoreCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
-	cfg.BindPFlag("workshops.dir", restoreCmd.PersistentFlags().Lookup("workshops-dir"))
-
-	restoreCmd.PersistentFlags().StringP("source", "s", config.DefaultSaveDir(cfg), "Source directory from where to get the exercises. This is usually the same directory the save command uses to save the exercises.")
-	cfg.BindPFlag("save.output.directory", restoreCmd.PersistentFlags().Lookup("source"))
+	cfg.BindFlagConfigToCommand("workshop.dir", restoreCmd)
+	cfg.BindFlagConfigToCommand("workshops.dir", restoreCmd)
+	cfg.BindFlagConfigToCommand("save.output.directory", restoreCmd)
 
 	return restoreCmd
 }

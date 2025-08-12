@@ -67,11 +67,8 @@ func getAllConfig() {
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 
-	configCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", configCmd.PersistentFlags().Lookup("workshop"))
-
-	configCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
-	cfg.BindPFlag("workshops.dir", configCmd.PersistentFlags().Lookup("workshops-dir"))
+	cfg.BindFlagConfigToCommand("workshop.dir", configCmd)
+	cfg.BindFlagConfigToCommand("workshops.dir", configCmd)
 
 	return configCmd
 }

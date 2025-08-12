@@ -172,21 +172,11 @@ type TemplateData struct {
 func GetCmd(configuration *config.Config) *cobra.Command {
 	cfg = configuration
 
-	saveCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
-	cfg.BindPFlag("workshop.path", saveCmd.PersistentFlags().Lookup("workshop"))
+	cfg.BindFlagConfigToCommand("workshop.dir", saveCmd)
+	cfg.BindFlagConfigToCommand("workshops.dir", saveCmd)
+	cfg.BindFlagConfigToCommand("save.output.directory", saveCmd)
+	cfg.BindFlagConfigToCommand("save.shouldCommit", saveCmd)
+	cfg.BindFlagConfigToCommand("save.commit.message", saveCmd)
 
-	saveCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
-	cfg.BindPFlag("workshops.dir", saveCmd.PersistentFlags().Lookup("workshops-dir"))
-
-	saveCmd.PersistentFlags().StringP("output", "o", config.DefaultSaveDir(cfg), "Path to the output directory")
-	cfg.BindPFlag("save.output.directory", saveCmd.PersistentFlags().Lookup("output"))
-
-	saveCmd.PersistentFlags().BoolP("commit", "c", false, "After adding the exercise to the output directory, commit the changes. This requires the output directory to be a git repository.")
-	cfg.BindPFlag("save.shouldCommit", saveCmd.PersistentFlags().Lookup("commit"))
-
-	saveCmd.PersistentFlags().StringP("commitMessage", "m", "[{{ .Workshop.Slug }}] Add exercise {{ .Exercise.BreadCrumbs }}",
-		"Commit message to use, in case the --commit flag is set or the save.shouldCommit configuration is set to true. "+
-			"The template is rendered using Go's text/template package.")
-	cfg.BindPFlag("save.commit.message", saveCmd.PersistentFlags().Lookup("commitMessage"))
 	return saveCmd
 }

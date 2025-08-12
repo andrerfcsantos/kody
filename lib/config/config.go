@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	gap "github.com/muesli/go-app-paths"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -18,9 +19,10 @@ const (
 )
 
 type Config struct {
-	AppName  string
-	gapScope *gap.Scope
-	*viper.Viper
+	AppName       string
+	gapScope      *gap.Scope
+	viper         *viper.Viper
+	configFlagMap map[string]interface{}
 }
 
 func NewConfig(appName string) *Config {
@@ -35,10 +37,33 @@ func NewConfig(appName string) *Config {
 	viperCfg.SetConfigType(configType)
 
 	return &Config{
-		AppName:  appName,
-		Viper:    viperCfg,
-		gapScope: gap.NewScope(gap.User, appName),
+		AppName:       appName,
+		viper:         viperCfg,
+		gapScope:      gap.NewScope(gap.User, appName),
+		configFlagMap: make(map[string]interface{}),
 	}
+}
+
+func (c *Config) BindFlagConfigToCommand(key string, cmd *cobra.Command) {
+	if fc, ok := c.configFlagMap[key]; ok {
+		switch v := fc.(type) {
+		case FlagConfig[string]:
+			cmd.PersistentFlags().StringP(v.FlagName, v.FlagShortHand, v.Default, v.Description)
+			c.viper.BindPFlag(key, cmd.PersistentFlags().Lookup(v.FlagName))
+		case FlagConfig[int]:
+			cmd.PersistentFlags().IntP(v.FlagName, v.FlagShortHand, v.Default, v.Description)
+			c.viper.BindPFlag(key, cmd.PersistentFlags().Lookup(v.FlagName))
+		case FlagConfig[bool]:
+			cmd.PersistentFlags().BoolP(v.FlagName, v.FlagShortHand, v.Default, v.Description)
+			c.viper.BindPFlag(key, cmd.PersistentFlags().Lookup(v.FlagName))
+		default:
+			panic(fmt.Sprintf("unsupported type: %T", fc))
+		}
+	}
+}
+
+func AddFlagConfig[T string | int | bool](c *Config, flagConfig FlagConfig[T]) {
+	c.configFlagMap[flagConfig.Key] = flagConfig
 }
 
 func (c *Config) Read() error {
@@ -48,8 +73,8 @@ func (c *Config) Read() error {
 	}
 
 	for _, path := range slices.Backward(paths) {
-		c.SetConfigFile(path)
-		err := c.MergeInConfig()
+		c.viper.SetConfigFile(path)
+		err := c.viper.MergeInConfig()
 		if err != nil {
 			return fmt.Errorf("merging config from '%s': %w", path, err)
 		}
@@ -76,12 +101,12 @@ func (c *Config) Write() error {
 		}
 
 		configPath := filepath.Join(configDir, configName+"."+configType)
-		c.SetConfigFile(configPath)
+		c.viper.SetConfigFile(configPath)
 	} else {
-		c.SetConfigFile(paths[0])
+		c.viper.SetConfigFile(paths[0])
 	}
 
-	err = c.WriteConfig()
+	err = c.viper.WriteConfig()
 	if err != nil {
 		return fmt.Errorf("writing config: %w", err)
 	}
@@ -107,4 +132,28 @@ func (c *Config) DataDir() (string, error) {
 	}
 
 	return dataPaths[0], nil
+}
+
+func (c *Config) Get(key string) any {
+	return c.viper.Get(key)
+}
+
+func (c *Config) GetString(key string) string {
+	return c.viper.GetString(key)
+}
+
+func (c *Config) GetBool(key string) bool {
+	return c.viper.GetBool(key)
+}
+
+func (c *Config) GetInt(key string) int {
+	return c.viper.GetInt(key)
+}
+
+func (c *Config) Set(key, value string) {
+	c.viper.Set(key, value)
+}
+
+func (c *Config) AllKeys() []string {
+	return c.viper.AllKeys()
 }

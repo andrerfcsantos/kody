@@ -59,19 +59,8 @@ func checkAndSetupConfigs(cmd *cobra.Command) error {
 func GetCmd(config *config.Config) *cobra.Command {
 	cfg = config
 
-	testCmd.PersistentFlags().StringP("workshop", "w", "", "Path to the current workshop")
-	err := cfg.BindPFlag("workshop.path", testCmd.PersistentFlags().Lookup("workshop"))
-
-	if err != nil {
-		fmt.Printf("Error setting up the workshop flag: %s\n", err)
-	}
-
-	testCmd.PersistentFlags().StringP("workshops-dir", "p", "", "Directory containing workshop sub-directories for auto-detection")
-	err = cfg.BindPFlag("workshops.dir", testCmd.PersistentFlags().Lookup("workshops-dir"))
-
-	if err != nil {
-		fmt.Printf("Error setting up the workshop-paths flag: %s\n", err)
-	}
+	cfg.BindFlagConfigToCommand("workshop.dir", testCmd)
+	cfg.BindFlagConfigToCommand("workshops.dir", testCmd)
 
 	return testCmd
 }
