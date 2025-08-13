@@ -50,9 +50,6 @@ release:
   draft: false
   prerelease: false
   name_template: 'v{{ .Version }}'
-  extra_files:
-    - glob: ./dist/*.tar.gz
-    - glob: ./dist/*.zip
 
 
 checksum:
