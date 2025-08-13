@@ -28,15 +28,9 @@ archives:
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
-    format: tar.gz
-    files:
-      - README.md
-  - name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else }}{{ .Arch }}{{ end }}
-    format: zip
+    format_overrides:
+      - goos: windows
+        format: zip
     files:
       - README.md
 
