@@ -12,10 +12,17 @@ The CLI is named after Kody, the mascot for the Epic React course!
 
 ### Option 1: Download from releases
 
-Download the latest release from the [GitHub releases page](https://github.com/andrerfcsantos/kody/releases).
+**Download Links for v1.0.0:**
 
-All releases come with a binary that you can run anywhere.
-Add it to your PATH for easier 
+- [Windows](https://github.com/andrerfcsantos/kody/releases/download/v1.0.0/kody_Windows_x86_64.zip) 
+- Mac ([Intel](https://github.com/andrerfcsantos/kody/releases/download/v1.0.0/kody_Darwin_x86_64.zip) | [Apple](https://github.com/andrerfcsantos/kody/releases/download/v1.0.0/kody_Darwin_arm64.zip))
+- Linux ([x86_64](https://github.com/andrerfcsantos/kody/releases/download/v1.0.0/kody_Linux_x86_64.tar.gz) | [arm64](https://github.com/andrerfcsantos/kody/releases/download/v1.0.0/kody_Linux_arm64.tar.gz))
+
+See the full list of versions of the binaries for diferent OS/architctures in the [GitHub releases page](https://github.com/andrerfcsantos/kody/releases).
+
+All releases come with a binary that you can run directly.
+
+Add it to your PATH for easier access to the `kody` command anywhere in the system!
 
 ### Option 2: Build from source
 
