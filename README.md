@@ -1,6 +1,10 @@
 # Kody
 
-Command line helper for Epic React Dev.
+Command line helper for [Epic React Dev](https://www.epicreact.dev/) course by Kent C. Dodds.
+
+Kody saves the exercise solutions from your playground if you later want to check them out. Useful if you are reviewing the exercises you've made.
+
+Kody is also able to restore previous solutions to the currrent playground. This is useful if you a revisitng an older exercise and want to bring back the solution you made to the playground.
 
 The CLI is named after Kody, the mascot for the Epic React course!
 
@@ -31,6 +35,29 @@ go build # Or 'go install' to make the binary available globally
 ./kody --help # or ./kody.exe on Windows
 ```
 
+## Typical workflow example with kody
+
+This is a typical use of kody, where you save your progress as you complete exercises and then restore previous solutions when needed. 
+
+```bash
+# 1. Configure Kody for your setup. You only need to do this once.
+kody config workshops.dir ~/epic-react-workshops
+kody config save.output.directory ~/epic-react-solutions
+
+# 2. Check current exercise status
+kody status
+
+# 3. You solve the exercise in the playground and run the tests on the workshop until they pass
+
+# 4. Save your completed exercise once you are done
+kody save
+
+# 5. You do more exercises, but then come back to a previous one and click "set playground to this exercise" in the workshop
+
+# 6. Restore the solution you had for this exercise
+kody restore
+```
+
 ## Configuration
 
 Before using Kody, it's recommended you set up some initial configuration.
@@ -38,8 +65,8 @@ That way you don't have to repeat yourself when giving commands to kody!
 
 The two recommended settings are:
 
-- `workshops.dir`: Path to the directory containing all workshop subdirectories. The current workshop and exercise you are working on will be auto-detected if all your workshops are in this folder
-- `save.output.directory`: Directory where exercises will be saved. This can be a git repository where you are saving all your solutions for the exercises.
+- `workshops.dir`: Path to the directory containing all workshop subdirectories. The current workshop and exercise you are working on will be auto-detected if all your workshops are in this folder.
+- `save.output.directory`: (Optional) Directory where exercises will be saved. This can be a git repository where you are saving all your solutions for the exercises. If you don't pass a value to this configuration, Kody will save the exercises to a data folder on your machine. No need to configure this if you don't care too much where the exercises are being stored.
 
 ### Recommended configuration
 
@@ -47,7 +74,7 @@ The two recommended settings are:
 # Set the workshops directory (should contain all Epic React workshops in subdirectories)
 kody config workshops.dir ~/epic-react-workshops
 
-# Set the output directory for saving exercise solutions
+# Set the output directory for saving exercise solutions (or skip this to have them saved in a default location)
 kody config save.output.directory ~/epic-react-solutions
 ```
 
@@ -184,23 +211,3 @@ Display version information.
 kody version
 ```
 
-## Examples
-
-### Complete workflow example
-
-```bash
-# 1. Configure Kody for your setup
-kody config workshops.dir ~/epic-react-workshops
-kody config save.output.directory ~/epic-react-solutions
-
-# 2. Check current exercise status
-kody status
-
-# 3. Save your completed exercise once you are done
-kody save
-
-# 4. You later do more exercises, but then come back to a previous one.
-
-# 5. Restore the solution you had for this exercise
-kody restore
-```
