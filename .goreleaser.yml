@@ -28,6 +28,15 @@ archives:
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
+    format: tar.gz
+    files:
+      - README.md
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format: zip
     files:
       - README.md
 
@@ -50,6 +59,8 @@ release:
   draft: false
   prerelease: false
   name_template: 'v{{ .Version }}'
+  extra_files:
+    - glob: './dist/kody_*/kody*'
 
 
 checksum:
