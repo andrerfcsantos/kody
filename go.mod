@@ -1,4 +1,4 @@
-module kody
+module github.com/andrerfcsantos/kody
 
 go 1.23
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"kody/cmd"
-	"kody/lib/config"
+	"github.com/andrerfcsantos/kody/cmd"
+	"github.com/andrerfcsantos/kody/lib/config"
 )
 
 var (

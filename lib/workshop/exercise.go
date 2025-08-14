@@ -3,7 +3,7 @@ package workshop
 import (
 	"fmt"
 	"io"
-	"kody/lib/hash"
+	"github.com/andrerfcsantos/kody/lib/hash"
 	"os"
 	"path/filepath"
 	"strconv"

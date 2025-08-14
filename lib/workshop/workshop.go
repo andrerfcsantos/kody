@@ -3,7 +3,7 @@ package workshop
 import (
 	"fmt"
 	"io/fs"
-	"kody/lib/directory"
+	"github.com/andrerfcsantos/kody/lib/directory"
 	"os"
 	"path/filepath"
 	"strings"

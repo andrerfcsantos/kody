@@ -3,9 +3,9 @@ package restore
 import (
 	"errors"
 	"fmt"
-	"kody/lib/config"
-	"kody/lib/directory"
-	"kody/lib/workshop"
+	"github.com/andrerfcsantos/kody/lib/config"
+	"github.com/andrerfcsantos/kody/lib/directory"
+	"github.com/andrerfcsantos/kody/lib/workshop"
 	"os"
 	"path/filepath"
 	"strconv"

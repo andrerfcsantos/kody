@@ -2,7 +2,7 @@ package version
 
 import (
 	"fmt"
-	"kody/lib/config"
+	"github.com/andrerfcsantos/kody/lib/config"
 
 	"github.com/spf13/cobra"
 )

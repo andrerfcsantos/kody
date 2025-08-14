@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	configCmd "kody/cmd/config"
-	"kody/cmd/restore"
-	"kody/cmd/save"
-	"kody/cmd/status"
-	"kody/cmd/test"
-	"kody/cmd/version"
-	"kody/lib/config"
+	configCmd "github.com/andrerfcsantos/kody/cmd/config"
+	"github.com/andrerfcsantos/kody/cmd/restore"
+	"github.com/andrerfcsantos/kody/cmd/save"
+	"github.com/andrerfcsantos/kody/cmd/status"
+	"github.com/andrerfcsantos/kody/cmd/test"
+	"github.com/andrerfcsantos/kody/cmd/version"
+	"github.com/andrerfcsantos/kody/lib/config"
 	"os"
 
 	"github.com/spf13/cobra"

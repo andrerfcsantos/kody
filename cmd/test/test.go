@@ -2,8 +2,8 @@ package test
 
 import (
 	"fmt"
-	"kody/lib/config"
-	"kody/lib/workshop"
+	"github.com/andrerfcsantos/kody/lib/config"
+	"github.com/andrerfcsantos/kody/lib/workshop"
 
 	"github.com/spf13/cobra"
 )

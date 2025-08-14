@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"kody/lib/config"
+	"github.com/andrerfcsantos/kody/lib/config"
 	"sort"
 
 	"github.com/spf13/cobra"
